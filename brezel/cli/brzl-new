@@ -1,0 +1,100 @@
+#!/bin/zsh
+
+# This script is supposed to be sourced and not executed.
+([[ -n $ZSH_EVAL_CONTEXT && $ZSH_EVAL_CONTEXT =~ :file$ ]] ||
+ [[ -n $BASH_VERSION ]] && (return 0 2>/dev/null)) || {
+    >&2 echo "[E] $0 has to be sourced."; exit 1;
+}
+
+# Check initialization
+[[ "${BREZEL_INITIALIZED:-false}" == 'true' ]] || {
+    >&2 echo "[E] ${0}_init was not sourced."; return 1;
+}
+
+# Create home folder for research projects
+mkdir -p "${BREZEL_WORKSPACE}"
+
+# Prepare command arguments for the cookiecutter container
+# Possible arguments are:
+#   -p <key>            to prompt the user for <key> value
+#   -v <key> <value>    to set <key> with <value>
+# 
+# See brezel_create_project()
+_cookiecutter_args () {
+    local defaults_args="-p project_title"
+    local with_defaults=true
+    while (($# != 0)); do
+        case "$1" in
+            --use-local-platform)
+                echo "-v research_platform_url ${BREZEL_ROOT}/.git"
+                ;;
+            -y|--yes|--no-prompt)
+                with_defaults=false
+                ;;
+            -p) echo "$1" "$2"; shift;;
+            -v) echo "$1" "$2" "$3"; shift 2;;
+            *) ;;
+        esac
+        shift
+    done
+    ! ${with_defaults} || echo "${defaults_args}"
+}
+
+# Run docker-compose on brezel config file
+_docker_compose () {
+    ${BREZEL_SUDO:-} docker-compose -f "${BREZEL_ROOT}/docker/docker-compose.yml" "$@"
+}
+
+# Get home directory for project
+_project_home () {
+    local home="${BREZEL_WORKSPACE}"
+    while (($# != 0)); do
+        case "$1" in
+            --home|--brezel-home)
+                (($# > 1)) || { _brzlog ERROR "$1 expects an argument"; return 1; }
+                home="$2"; shift;;
+            *) ;;
+        esac
+        shift
+    done
+    [[ -d "${home}" ]] || { _brzlog ERROR "Home directory '${home}' doesn't exist."; return 1; }
+    [[ -w "${home}" ]] || { _brzlog ERROR "Cannot write in directory '${home}'."; return 1; }
+    _brzlog DEBUG "Projects workspace: ${home}"
+    echo "${home}"
+}
+
+# Call cookicutter to create new research project
+brezel_create_project () {
+    local SERVICE='cookiecutter'
+    local PROJECT_TPL="${BREZEL_ROOT}/project_tpl"
+    local PROJECT_TMP=$(mktemp --directory "${TMPDIR:-/tmp}/brezel.XXXXXXXXX")
+    local PROJECT_HOME
+    PROJECT_HOME=$(_project_home "$@") || return
+
+    # run cookicutter
+    _docker_compose build ${SERVICE} >/dev/null
+    _docker_compose run \
+        -v "${PROJECT_TPL}:/template:ro" \
+        -v "${PROJECT_TMP}:/project" \
+        -v "${PROJECT_TMP}/.replay:/root/.cookiecutter_replay" \
+        ${SERVICE} /template $(_cookiecutter_args "$@")
+
+    # copy generated project
+    local PROJECT_NAME
+    PROJECT_NAME=$(ls -1 "${PROJECT_TMP}")
+    cp -R "${PROJECT_TMP}/${PROJECT_NAME}" "${PROJECT_HOME}"
+
+    # copy additional files
+    cd "${PROJECT_HOME}/${PROJECT_NAME}"
+    cp --no-dereference "${PROJECT_TPL}/bazelrc" .bazelrc
+    _brzlog INFO "Project ${PROJECT_NAME} created in ${PROJECT_HOME}"
+
+    # setup git repository
+    rm -f "make_initial_commit.sh"
+    "${PROJECT_TMP}/${PROJECT_NAME}/make_initial_commit.sh"
+
+    # store cookiecutter replay file in .git/info
+    cp -R "${PROJECT_TMP}/.replay" .git/info/research_platform_replay
+}
+
+brezel_create_project "${@}"

@@ -1,0 +1,14 @@
+version: '2.3'
+
+services:
+
+    brezel:
+        image: brezel/devel:cuda
+        runtime: nvidia
+        environment:
+            - NVIDIA_VISIBLE_DEVICES=all
+        build:
+            context: ${CONTEXT_ROOT:-..}
+            dockerfile: docker/devel/Dockerfile
+            args:
+                - BASEIMAGE=nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04

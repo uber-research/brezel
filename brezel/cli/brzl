@@ -1,0 +1,95 @@
+#!/bin/zsh
+
+# generic function for printing messages to the user
+_brzlog () {
+    local level="${1}"
+    shift
+    local ptext="${@}"
+    local psymbol=""
+    local pcolor="normal"
+    local fd=1
+    case "${level}" in
+        ERROR)      psymbol="[E]"; pcolor="red"; fd=2;;
+        DEBUG)      psymbol="[D]"; pcolor="blue"; fd=2;;
+        INFO)       psymbol=" . "; pcolor="white";;
+        SUCCESS)    psymbol="[*]"; pcolor="green";;
+        *) >&2 echo "Unknown message type."; return 127;;
+    esac
+    if [[ -t ${fd} ]] && _brezel_colorize 2>/dev/null; then
+        psymbol="$fg_bold[$pcolor]${psymbol}$reset_color"
+        ptext="$fg[$pcolor]${ptext}$reset_color"
+    fi
+    >&${fd} echo "${psymbol}" "${ptext}"
+}
+
+# This script is supposed to be sourced and not executed.
+([[ -n $ZSH_EVAL_CONTEXT && $ZSH_EVAL_CONTEXT =~ :file$ ]] ||
+ [[ -n $BASH_VERSION ]] && (return 0 2>/dev/null)) || {
+    _brzlog ERROR "$0 has to be sourced."; exit 1;
+}
+
+# Check initialization
+[[ "${BREZEL_INITIALIZED:-false}" == 'true' ]] || {
+    _brzlog ERROR "${0}_init was not sourced."; return 1;
+}
+
+# Load global settings
+source "${BREZEL_RC}" || {
+    _brzlog ERROR "couldn't load global config. Please check '${BREZEL_RC}'."; return 1;
+}
+
+# Preflight tests
+_ensure_dependencies () {
+    local dep
+    for dep in git docker docker-compose; do
+        command -v $dep >/dev/null || {
+            _brzlog ERROR "cannot find '$dep' on system, please install it."; return 1;
+        }
+    done
+}
+_ensure_git_config () {
+    local attr
+    for attr in name email; do
+        git config user.$attr >/dev/null || {
+            _brzlog ERROR "git user.$attr must be set."; return 1;
+        }
+    done
+}
+
+_ensure_dependencies
+_ensure_git_config
+
+# Get current project root directory
+# Validity is checked later because we want to allow `brzl` to be run outside
+# a project for some commands (new, help, etc.)
+# But we need to get it now in case it contains a .brezelrc file
+BREZEL_CURRENT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+
+# Load project specific config (if exists)
+BREZEL_LOCAL_RC="${BREZEL_CURRENT_ROOT}/.brezelrc"
+if [[ -s "${BREZEL_LOCAL_RC}" ]]; then
+    _brzlog DEBUG "Local config: ${BREZEL_LOCAL_RC}"
+    source "${BREZEL_LOCAL_RC}" || {
+        _brzlog ERROR "couldn't load local config. Please check '${BREZEL_LOCAL_RC}'."; return 1;
+    }
+fi
+
+# Process command line arguments
+_brzlog DEBUG "Platform root: ${BREZEL_ROOT}"
+_brzlog DEBUG "Arguments: [${@}]"
+case "${1}" in
+    new|project)
+        shift
+        source "${BREZEL_INSTALL_DIR}/${BREZEL_CLI}-new" "${@}"
+        ;;
+    *)
+        # Make sure we are inside a project
+        _brzlog DEBUG "Project root: ${BREZEL_CURRENT_ROOT}"
+        [[ -d "${BREZEL_CURRENT_ROOT}" ]] || {
+            _brzlog ERROR "$0 must be invoked from a brezel project"; return 1;
+        }
+        # Let `make` handle the rest from here
+        # use subshell so that we don't actually change current directory
+        (cd "${BREZEL_CURRENT_ROOT}" && make "${@}")
+        ;;
+esac

@@ -1,0 +1,9 @@
+version: '2.3'
+
+services:
+
+    brezel:
+        entrypoint: /system/entrypoint.sh
+        command:
+            - rm -f /home/ubrzl/.cache/bazel
+            - bazel clean

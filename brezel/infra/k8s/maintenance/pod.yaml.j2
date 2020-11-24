@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ podname }}
+spec:
+  containers:
+  - name: maintenance
+    image: {{ image }}
+    args:
+    - sleep
+    - infinity
+  nodeSelector:
+    cloud.google.com/gke-nodepool: {{ nodepool }}
+  tolerations:
+  {%- for key in toleration_keys %}
+  - key: {{ key }}
+    operator: "Equal"
+    value: {{ toleration_values[loop.index0] }}
+    effect: "NoSchedule"
+  {%- endfor %}

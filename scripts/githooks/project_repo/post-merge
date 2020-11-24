@@ -1,0 +1,44 @@
+#!/bin/bash
+
+PLATFORM_DIR="third_party/brezel"
+
+function pull_submodule_force {
+    git submodule sync --recursive
+    git submodule update --init --recursive --force
+}
+
+function is_submodule_clean {
+    [[ -z $(cd "${PLATFORM_DIR}" && git status --short) ]]
+}
+
+function is_submodule_absent {
+    ! [[ -s "${PLATFORM_DIR}/.git" ]]
+}
+
+function submodule_version {
+    git ls-tree HEAD ${PLATFORM_DIR} | awk '{print $3}'
+}
+
+function prev_submodule_version {
+    git ls-tree HEAD^1 ${PLATFORM_DIR} | awk '{print $3}'
+}
+
+function submodule_version_changed {
+    [[ "$(submodule_version)" != "$(prev_submodule_version)" ]]
+}
+
+# Making sure we download the Research Platform submodule
+if is_submodule_absent; then
+    echo "Pulling Research Platform..."
+    pull_submodule_force
+fi
+
+# If submodule got updated upstream, update the submodule tree or prompt use to cleanup
+if submodule_version_changed; then
+    if is_submodule_clean; then
+        pull_submodule_force
+        echo "Local Research Platform submodule tree updated."
+    else
+        echo "You have uncommited changes inside ${PLATFORM_DIR}. Please proceed to clean up the submodule. Then run make init"
+    fi
+fi

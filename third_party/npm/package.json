@@ -1,0 +1,9 @@
+{
+    "name": "brezel-npm-deps",
+    "version": "0.0.1",
+    "dependencies": {
+        "blessed-contrib": "4.8.17",
+        "blessed": "0.1.54",
+        "kubernetes-client": "9.0.0"
+    }
+}

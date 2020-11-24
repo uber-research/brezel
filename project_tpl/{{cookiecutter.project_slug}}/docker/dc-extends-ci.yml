@@ -1,0 +1,6 @@
+version: '2.3'
+
+services:
+
+    brezel:
+        command: ["bazel", "build", "..."]

@@ -1,0 +1,21 @@
+{
+    "project_namespace": "brzl",
+    "project_title": "My Research Project",
+    "project_slug": "{{ cookiecutter.project_title.lower().replace(' ', '-') }}",
+    "project_workdir": "myproject",
+    "project_user": "ubrzl",
+    "research_platform_base_image": "brezel/devel:latest",
+    "research_platform_slug": "brezel",
+    "research_platform_url": "https://github.com/uber/brezel.git",
+    "research_platform_workspace": "brezel",
+    "include_protobuf": "false",
+    "include_docker": "false",
+    "include_docker_gcr": "false",
+    "include_kubectl": "false",
+    "include_terraform": "false",
+    "include_gsutil": "false",
+    "include_opengl": "false",
+    "include_opencv": "false",
+    "include_linters": "false",
+    "include_orca": "false"
+}

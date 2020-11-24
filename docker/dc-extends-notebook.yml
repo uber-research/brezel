@@ -1,0 +1,7 @@
+version: '2.3'
+
+services:
+    brezel:
+        ports:
+            - 8888:8888
+        entrypoint: "bazel run @brezel//brezel/tools/notebook"

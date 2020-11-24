@@ -1,0 +1,43 @@
+version: '2.3'
+
+services:
+
+    base:
+        image: {{cookiecutter.project_namespace}}/{{cookiecutter.project_slug}}:base
+        build:
+            context: ../third_party/{{cookiecutter.research_platform_slug}}
+            dockerfile: docker/devel/Dockerfile
+            args:
+                - WITH_PROTOBUF={{cookiecutter.include_protobuf}}
+                - WITH_DOCKER={{cookiecutter.include_docker}}
+                - WITH_DOCKER_GCR={{cookiecutter.include_docker_gcr}}
+                - WITH_KUBECTL={{cookiecutter.include_kubectl}}
+                - WITH_TERRAFORM={{cookiecutter.include_terraform}}
+                - WITH_GSUTIL={{cookiecutter.include_gsutil}}
+                - WITH_OPENGL={{cookiecutter.include_opengl}}
+                - WITH_OPENCV={{cookiecutter.include_opencv}}
+                - WITH_LINTERS={{cookiecutter.include_linters}}
+                - WITH_ORCA={{cookiecutter.include_orca}}
+
+    brezel:
+        image: {{cookiecutter.project_namespace}}/{{cookiecutter.project_slug}}:devel
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile
+        working_dir: /{{cookiecutter.project_workdir}}
+        cap_add:
+            - SYS_PTRACE
+        security_opt:
+            - seccomp:unconfined
+        volumes:
+            - ..:/{{cookiecutter.project_workdir}}:cached
+            - ${HOME}/.gitconfig:/home/{{cookiecutter.project_user}}/.gitconfig:ro
+            - /var/run/docker.sock:/var/run/docker.sock
+            - bazel-cache:/var/cache/bazel:delegated
+            - bazel-repo-cache:/var/cache/bazel/repo:delegated
+
+volumes:
+    bazel-cache:
+        name: {{cookiecutter.project_namespace}}-bazel-cache
+    bazel-repo-cache:
+        name: {{cookiecutter.project_namespace}}-bazel-repo-cache

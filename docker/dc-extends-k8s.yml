@@ -1,0 +1,7 @@
+version: '2.3'
+
+services:
+
+    brezel:
+        volumes:
+            - ${HOME}/.kube/config/:/home/ubrzl/.kube/config/

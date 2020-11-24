@@ -1,0 +1,9 @@
+title: Brezel 
+description: >- # this means to ignore newlines until "baseurl:"
+    Brezel is a Bazel-based framework for Reproducible Research Software
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "" # the base hostname & protocol for your site, e.g. http://example.com
+markdown: kramdown
+theme: just-the-docs
+host: 0.0.0.0
+port: 4000

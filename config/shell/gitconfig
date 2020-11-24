@@ -1,0 +1,16 @@
+[core]
+	editor = vim
+	pager = less
+[alias]
+	st = status
+	br = branch
+	co = checkout
+	ci = commit
+	glog = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+[pager]
+	log = false
+	branch = false
+	diff = false
+	tag = false
+[pull]
+	rebase = true

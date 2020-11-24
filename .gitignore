@@ -1,0 +1,31 @@
+.DS_Store
+.vscode/
+target/
+*.iml
+.idea
+log/
+*.pyc
+*.pickle
+node_modules
+.sass-cache
+*.css.map
+.terraform
+terraform.tfstate
+terraform.tfstate.backup
+
+# Congifuration Files
+config/secrets-development.yaml
+.idea
+
+*.swp
+*.swo
+*.swn
+*.swm
+env*
+
+# Bazel related
+bazel-*
+.cache
+
+# Data files
+data/*

@@ -1,0 +1,25 @@
+export ZSH="${HOME}/.oh-my-zsh"
+
+ZSH_THEME="agnoster"
+
+bindkey '^@' autosuggest-accept
+
+plugins=(
+    git
+    colored-man-pages
+    zsh-autosuggestions
+    kubectl
+)
+
+source $ZSH/oh-my-zsh.sh
+
+source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+prompt_context() {
+    prompt_segment white $CURRENT_FG "\uf1b2"
+}
+
+export PATH="${PATH}:${HOME}/.local/bin"
+
+# Bazel completion
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path ~/.zsh/cache

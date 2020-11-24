@@ -1,0 +1,14 @@
+version: '2.3'
+
+services:
+    brezel:
+        image: brezel/devel:site
+        build:
+            context: ${CONTEXT_ROOT:-..}
+            args:
+                - BASEIMAGE=brezel/devel:latest
+                - USER=ubrzl
+            dockerfile: docker/site/Dockerfile
+        ports:
+            - 4000:4000
+        user: ubrzl

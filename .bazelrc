@@ -1,0 +1,7 @@
+# Default build settings, fetch cache
+fetch --experimental_repository_cache=~/.cache/bazel/repo --experimental_scale_timeouts=5
+build --cxxopt='-std=c++14' --disk_cache=~/.cache/bazel --experimental_repository_cache=~/.cache/bazel/repo --noexperimental_convenience_symlinks --experimental_scale_timeouts=9 --workspace_status_command=./brezel/tools/buildinfo/mkstamp.sh
+
+# Default test behavior
+test --test_output=errors
+

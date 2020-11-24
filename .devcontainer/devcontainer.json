@@ -1,0 +1,19 @@
+{
+    "name": "Brezel-Dev",
+    "workspaceFolder": "/repo",
+    "dockerComposeFile": [
+        "../docker/docker-compose.yml",
+        "docker-compose.extend.yml"
+    ],
+    "service": "devel",
+    "runServices": ["devel"],
+    "shutdownAction": "stopCompose",
+    "settings": {
+        "terminal.integrated.shell.linux": null
+    },
+    "extensions": [
+        "devondcarew.bazel-code",
+        "ms-python.python",
+        "shd101wyy.markdown-preview-enhanced"
+    ]
+}

@@ -1,0 +1,9 @@
+version: '2.3'
+
+services:
+
+    brezel:
+        volumes:
+            - ${HOME}/.oh-my-zsh:/home/ubrzl/.oh-my-zsh:ro
+            - ${HOME}/.zsh-syntax-highlighting:/home/ubrzl/.zsh-syntax-highlighting:ro
+        command: ["zsh"]

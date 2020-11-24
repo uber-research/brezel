@@ -1,0 +1,41 @@
+version: '2.3'
+
+services:
+
+    base:
+        image: brezel/base:latest
+        build:
+            context: ${CONTEXT_ROOT:-..}
+            dockerfile: docker/devel/Dockerfile
+            target: bazel
+            args: &defaults_build_args
+                bazel_version: 3.4.1
+                WITH_DOCKER: "true"
+                WITH_DOCKER_GCR: "true"
+                WITH_KUBECTL: "true"
+                WITH_JEKYLL: "true"
+
+    brezel:
+        image: brezel/devel:latest
+        build:
+            context: ${CONTEXT_ROOT:-..}
+            dockerfile: docker/devel/Dockerfile
+            args: *defaults_build_args
+        working_dir: /repo
+        volumes:
+            - ..:/repo:cached
+            - ${HOME}/.gitconfig:/home/ubrzl/.gitconfig:ro
+            - /var/run/docker.sock:/var/run/docker.sock
+            - bazel-cache:/var/cache/bazel:delegated
+            - bazel-repo-cache:/var/cache/bazel/repo:delegated
+
+    cookiecutter:
+        image: brezel/cookiecutter:latest
+        build:
+            context: cookiecutter
+
+volumes:
+    bazel-cache:
+        name: brezel-bazel-cache
+    bazel-repo-cache:
+        name: brezel-bazel-repo-cache

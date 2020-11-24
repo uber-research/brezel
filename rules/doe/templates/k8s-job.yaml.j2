@@ -1,0 +1,115 @@
+{%- set job = { "name": "{JOBNAME}",
+                "output_gcs": "{OUTPUT_GCS}",
+                "output_dir": "{OUTPUT_DIR}",
+                "input_gcs": "{INPUT_GCS}",
+                "input_dir": "{INPUT_DIR}",
+                "group": "{JOBGROUP}",
+                "deadline": {JOBDEADLINE},
+                "command": "{COMMAND}",
+                "image": "{IMAGE}",
+                "request": {"cpu": "{REQUEST_CPU}", "memory": "{REQUEST_MEM}", "gpus": "{N_GPUS}"} }
+%}
+{%- set nodepool = "{NODEPOOL}" %}
+{%- set toleration_keys = [{TOLERATION_KEYS}] %}
+{%- set toleration_values = [{TOLERATION_VALUES}] %}
+{%- set compress = {COMPRESS} %}
+{%- set jobnames = [{JOBNAMES}] %}
+{%- for p in params %}
+---
+{%- if jobnames|length == params|length %}
+{%- set jobname = jobnames[loop.index-1] %}
+{%- elif params|length > 1 %}
+{%- set jobname = job.name + '-' + loop.index|string %}
+{%- else %}
+{%- set jobname = job.name %}
+{%- endif %}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ jobname }}
+  labels:
+    jobgroup: {{ job.group }}
+spec:
+  completions: 1
+  template:
+    spec:
+      containers:
+        - name: worker
+          image: {{ job.image }}
+          {%- if job.command %}
+          command: ["{{ job.command }}"]
+          {%- endif %}
+          args:
+          {%- set args = p.split(' ') %}
+          {%- for arg in args %}
+            - "{{ arg }}"
+          {%- endfor %}
+          volumeMounts:
+            - name: output-data
+              mountPath: {{ job.output_dir }}
+            {%- if job.input_dir %}
+            - name: input-data
+              mountPath: {{ job.input_dir }}
+            {%- endif %}
+          resources:
+            {%- if (job.request.cpu != "0") or (job.request.memory != "0") %}
+            requests:
+            {%- endif %}
+            {%- if job.request.cpu != "0" %}
+              cpu: "{{ job.request.cpu }}"
+            {%- endif %}
+            {%- if job.request.memory != "0" %}
+              memory: "{{ job.request.memory }}"
+            {%- endif %}
+            {%- if (job.request.gpus | int) > 0 %}
+            limits:
+              nvidia.com/gpu: {{ job.request.gpus }}
+            {%- endif %}
+        - name: uploader
+          image: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+          command: ["/bin/sh", "-c"]
+          args:
+            - while [ ! -f "{{ job.output_dir }}/DONE" ]; do sleep 1; done;
+              sleep 1;
+              mv {{ job.output_dir }}/DONE {{ job.output_dir }}/DONE.{{loop.index}};
+              ls -l {{ job.output_dir }}/*;
+              {%- if compress == true %}
+              gzip {{ job.output_dir }}/*;
+              {%- endif %}
+              gsutil cp -r {{ job.output_dir }}/* {{ job.output_gcs }};
+          volumeMounts:
+            - name: output-data
+              mountPath: {{ job.output_dir }}
+        {%- if job.input_dir %}
+        - name: downloader
+          image: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+          command: ["/bin/sh", "-c"]
+          args:
+            - gsutil cp -r {{ job.input_gcs }} {{ job.input_dir }};
+              touch {{ job.input_dir }}/READY;
+          volumeMounts:
+            - name: input-data
+              mountPath: {{ job.input_dir }}
+        {%- endif %}
+      volumes:
+        - name: output-data
+          emptyDir: {}
+        {%- if job.input_dir %}
+        - name: input-data
+          emptyDir: {}
+        {%- endif %}
+      restartPolicy: Never
+      tolerations:
+      {%- for key in toleration_keys %}
+      - key: {{ key }}
+        operator: "Equal"
+        value: {{ toleration_values[loop.index0] }}
+        effect: "NoSchedule"
+      {%- endfor %}
+      {%- if nodepool|length %}
+      nodeSelector:
+        cloud.google.com/gke-nodepool: "{{ nodepool }}"
+      {%- endif %}
+  backoffLimit: 6
+  {% if job.deadline > 0 %}activeDeadlineSeconds: {{ job.deadline }}{%- endif %}
+{%- endfor %}

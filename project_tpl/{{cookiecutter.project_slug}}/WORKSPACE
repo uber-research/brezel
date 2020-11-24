@@ -1,0 +1,34 @@
+##
+# Bazel rules from Brezel
+##
+local_repository(
+    name = "{{cookiecutter.research_platform_workspace}}",
+    path = "./third_party/{{cookiecutter.research_platform_slug}}"
+)
+
+load("@{{cookiecutter.research_platform_workspace}}//rules:defaults.bzl", project_defaults="brezel_defaults")
+project_defaults(
+    gcp_project = "my-gcp-project",
+    gcp_cluster = "my-gcp-cluster",
+    gcp_bucket  = "gs://my-gcp-bucket",
+    gcp_registry = "gcr.io/my-gcp-registry",
+)
+
+load("@{{cookiecutter.research_platform_workspace}}//third_party:deps.bzl", {{cookiecutter.project_namespace}}_ext_libs="third_party_repositories")
+{{cookiecutter.project_namespace}}_ext_libs()
+
+load("@{{cookiecutter.research_platform_workspace}}//third_party:rules.bzl", {{cookiecutter.project_namespace}}_rules="rule_repositories")
+{{cookiecutter.project_namespace}}_rules()
+
+load("@{{cookiecutter.research_platform_workspace}}//third_party:rules_deps.bzl", {{cookiecutter.project_namespace}}_deps="all_indirect_repositories")
+{{cookiecutter.project_namespace}}_deps()
+
+load("@{{cookiecutter.research_platform_workspace}}//third_party/toolchains:prepare_toolchains.bzl", {{cookiecutter.project_namespace}}_prepare="prepare_all_toolchains")
+{{cookiecutter.project_namespace}}_prepare()
+
+load("@{{cookiecutter.research_platform_workspace}}//third_party/toolchains:toolchains.bzl", {{cookiecutter.project_namespace}}_toolchains="setup_all_toolchains")
+{{cookiecutter.project_namespace}}_toolchains()
+
+##
+# Project specific rules
+##

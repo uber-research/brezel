@@ -1,0 +1,12 @@
+# Common temp files
+.DS_Store
+.vscode/
+*.iml
+.idea
+*.pyc
+*.pickle
+*.swp
+*.swo
+
+# Bazel related
+bazel-*
