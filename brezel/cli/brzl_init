@@ -24,6 +24,7 @@ brezel_init() {
     BREZEL_CLI="${BREZEL_CLI_INIT%_init}"
     BREZEL_ROOT=$(cd "${BREZEL_INSTALL_DIR}/../.." && pwd -P)
     BREZEL_HOME="${HOME}/.brezel"
+    BREZEL_TMPDIR="${BREZEL_HOME}/tmp"
     BREZEL_WORKSPACE="${BREZEL_WORKSPACE:-${HOME}/ResearchProjects}"
     BREZEL_RC="${BREZEL_HOME}/etc/brezelrc"
 
@@ -33,6 +34,7 @@ brezel_init() {
     mkdir -p "${BREZEL_HOME}/log"
     mkdir -p "${BREZEL_HOME}/etc/secrets"
     [[ -L "${BREZEL_HOME}/secrets" ]] || ln -sf "etc/secrets" "${BREZEL_HOME}/secrets"
+    mkdir -p "${BREZEL_TMPDIR}"
 
     # Initialize global config
     [[ -f "${BREZEL_RC}" ]] || brezel_create_global_rc
@@ -51,7 +53,7 @@ brezel_create_global_rc () {
 
 # Initialize
 brezel_init
-export BREZEL_HOME BREZEL_WORKSPACE BREZEL_ROOT BREZEL_CLI BREZEL_RC
+export BREZEL_HOME BREZEL_WORKSPACE BREZEL_ROOT BREZEL_CLI BREZEL_TMPDIR BREZEL_RC
 alias ${BREZEL_CLI}="source '${BREZEL_INSTALL_DIR}/${BREZEL_CLI}'"
 unset -f brezel_init
 unset -f brezel_create_global_rc
