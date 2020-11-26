@@ -93,7 +93,7 @@ brezel_create_project () {
 
     # copy additional files
     cd "${PROJECT_HOME}/${PROJECT_NAME}"
-    cp -a "${PROJECT_TPL}/bazelrc" .bazelrc # use -P, --no-dereference to preserve symlink
+    cp -a "${PROJECT_TPL}/bazelrc" .bazelrc # use -a to preserve symlink
     _brzlog INFO "Project ${PROJECT_NAME} created in ${PROJECT_HOME}"
 
     # setup git repository
