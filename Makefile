@@ -23,9 +23,12 @@ test:
 	@$(ROOT)/scripts/test.sh
 
 .PHONY: install
+PWD := $(shell pwd)
 install: brezel/cli/brzl_init
-	@echo "Enter the following command to install the Brezel CLI in the current shell:"
+	@echo "Execute the following command to install the Brezel CLI in the current shell:"
 	@echo ""
-	@echo "  source '${PWD}/$<'"
+	@echo "\033[1m  source '$(PWD)/$<'  \033[0m"
 	@echo ""
-	@echo "Copy it in your ~/.bashrc or ~/.zshrc to make brzl permanently available."
+	@echo "====================================================================================="
+	@echo "==    Copy it in your ~/.bashrc or ~/.zshrc to make brzl permanently available.    =="
+	@echo "====================================================================================="
