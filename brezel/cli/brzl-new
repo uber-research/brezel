@@ -18,7 +18,7 @@ mkdir -p "${BREZEL_WORKSPACE}"
 # Possible arguments are:
 #   -p <key>            to prompt the user for <key> value
 #   -v <key> <value>    to set <key> with <value>
-# 
+#
 # See brezel_create_project()
 _cookiecutter_args () {
     local defaults_args="-p project_title"
@@ -67,17 +67,24 @@ _project_home () {
 brezel_create_project () {
     local SERVICE='cookiecutter'
     local PROJECT_TPL="${BREZEL_ROOT}/project_tpl"
-    local PROJECT_TMP=$(mktemp --directory "${TMPDIR:-/tmp}/brezel.XXXXXXXXX")
     local PROJECT_HOME
     PROJECT_HOME=$(_project_home "$@") || return
+
+    # create temporary folder (inside /home so that macosx can mount it)
+    mkdir -p "${BREZEL_TMPDIR}"
+    local PROJECT_TMP=$(mktemp -d "${BREZEL_TMPDIR}/brezel.XXXXXXXXX")
+    mkdir -p "${PROJECT_TMP}/.replay/" # create this directory now to prevent user permission issue
+    [[ -w "${PROJECT_TMP}" ]] || { _brzlog ERROR "Invalid temporary directory '${PROJECT_TMP}'."; return 1; }
 
     # run cookicutter
     _docker_compose build ${SERVICE} >/dev/null
     _docker_compose run \
+        -u "$(id -u):$(id -g)" \
         -v "${PROJECT_TPL}:/template:ro" \
         -v "${PROJECT_TMP}:/project" \
-        -v "${PROJECT_TMP}/.replay:/root/.cookiecutter_replay" \
+        -v "${PROJECT_TMP}/.replay:/.cookiecutter_replay" \
         ${SERVICE} /template $(_cookiecutter_args "$@")
+    (($? == 0)) || { _brzlog ERROR "Cookicutter terminated with non-zero exit code."; return 1; }
 
     # copy generated project
     local PROJECT_NAME
@@ -86,7 +93,7 @@ brezel_create_project () {
 
     # copy additional files
     cd "${PROJECT_HOME}/${PROJECT_NAME}"
-    cp --no-dereference "${PROJECT_TPL}/bazelrc" .bazelrc
+    cp -P "${PROJECT_TPL}/bazelrc" .bazelrc # use -P, --no-dereference to preserve symlink
     _brzlog INFO "Project ${PROJECT_NAME} created in ${PROJECT_HOME}"
 
     # setup git repository
@@ -95,6 +102,9 @@ brezel_create_project () {
 
     # store cookiecutter replay file in .git/info
     cp -R "${PROJECT_TMP}/.replay" .git/info/research_platform_replay
+
+    # cleanup
+    rm -rf "${PROJECT_TMP}"
 }
 
 brezel_create_project "${@}"
