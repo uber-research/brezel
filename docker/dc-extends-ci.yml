@@ -3,4 +3,4 @@ version: '2.3'
 services:
 
     brezel:
-        command: ["bazel", "test", "--", "//..."]
+        command: ["bazel", "test", "--deleted_packages=//examples/gcs_tensorboard", "--", "//..."]

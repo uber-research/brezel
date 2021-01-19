@@ -1,0 +1,12 @@
+language: python
+
+services:
+  - docker
+
+jobs:
+  include:
+    - stage: Tests
+      name: Integration Tests
+      script:
+        - make build
+        - make test
